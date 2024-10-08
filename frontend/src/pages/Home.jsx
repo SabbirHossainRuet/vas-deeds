@@ -16,7 +16,7 @@ const Home = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[deeds])
 
-    console.log(filterDeeds);
+    // console.log(filterDeeds);
 
   return (
     <div className="border-t">
