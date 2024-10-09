@@ -49,6 +49,8 @@ import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DeedContext } from "../context/DeedContext";
 import { uploadDeed, downloadDeed } from '../api';
+import axios from 'axios';
+const API_URL = 'http://localhost:5000/api/deeds';
 
 const Deed = () => {
     const { deedId } = useParams();
@@ -150,29 +152,35 @@ const Deed = () => {
     const handleDownload = async () => {
         try {
             // Fetch the deed information from your backend
-            const response = await downloadDeed(deedId); // Make sure this fetches fileId from backend
-            const fileId = response.fileId; // Extract the fileId from the response
-            console.log(fileId);
+            const response = await downloadDeed(deedId); // Fetch deed information to get the fileId
+    
+            const fileId = response.data.fileId; // Extract the fileId from the response
+            console.log('File ID:', fileId);
+    
             if (!fileId) {
                 alert("No file available for download.");
                 return;
             }
-            
+    
             // Now use fileId to download the actual file
-            const fileResponse = await downloadDeed(fileId); // Ensure this call downloads the actual file
-            const url = window.URL.createObjectURL(new Blob([fileResponse.data])); // Adjust depending on how your backend returns file data
+            const fileResponse = await axios.get(`${API_URL}/download/${deedId}`, { responseType: 'arraybuffer' });
+    
+            // Create a blob from the response data
+            const url = window.URL.createObjectURL(new Blob([fileResponse.data]));
             const a = document.createElement('a');
             a.href = url;
-            a.setAttribute('download', `${fileId}-deed.pdf`);  // Use fileId in the filename
+            a.setAttribute('download', `${deedId}-deed.pdf`);  // Use deedId in the filename
             document.body.appendChild(a);
             a.click();
             a.remove();
+    
             alert("File downloaded successfully!");
         } catch (error) {
             console.error("Error downloading file:", error);
             alert("Error downloading file.");
         }
     };
+    
     
     
 

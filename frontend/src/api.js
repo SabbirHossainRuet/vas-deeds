@@ -14,12 +14,13 @@ export const uploadDeed = async (id, file) => {
 
 export const downloadDeed = async (id) => {
     try {
-        const response = await axios.get(`${API_URL}/download/${id}`, { responseType: 'blob' });
-        console.log(response.data);
-        return response.data;
+        const response = await axios.get(`${API_URL}/download/${id}`);
+        return response;
     } catch (error) {
         console.error("Error downloading deed:", error.response ? error.response.data : error.message);
-        throw error; // Rethrow the error to be handled by the calling function
+        throw error; 
     }
 };
+
+
 

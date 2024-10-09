@@ -19,7 +19,13 @@ const writeDataToFile = (data) => {
 
 // Upload file to Google Drive and save fileId to JSON
 exports.uploadDeed = async (req, res) => {
+
+ 
   try {
+    // console.log("Request Body:", req.body); // Log request body
+    // console.log("Request Params:", req.params); // Log request params
+    // console.log("File:", req.file); // Log the file object
+
     const file = req.file;
     const deedId = req.params.id;
 
@@ -59,34 +65,58 @@ exports.uploadDeed = async (req, res) => {
   }
 };
 
-// Download file from Google Drive using fileId from JSON
+// This is your existing download function in deedFiles.js or similar
 exports.downloadDeed = async (req, res) => {
   try {
-    const deedId = req.params.id;
+      const deedId = req.params.id;
 
-    // Read existing data
-    const data = readDataFromFile();
+      // Fetch the deed information from your data source
+      const data = readDataFromFile(); // Ensure this function reads the deed files correctly
+      const deed = data[deedId];
 
-    const fileId = data[deedId]?.fileId;
+      if (!deed) {
+          return res.status(404).json({ error: 'Deed not found' });
+      }
 
-    if (!fileId) {
-      return res.status(404).json({ error: 'File not found for the given deedId' });
-    }
+      const fileId = deed.fileId;
+      if (!fileId) {
+          return res.status(404).json({ error: 'File not found for the given deedId' });
+      }
 
-    const response = await drive.files.get(
-      { fileId: fileId, alt: 'media' },
-      { responseType: 'stream' }
-    );
+      const driveResponse = await drive.files.get(
+          { fileId: fileId, alt: 'media' },
+          { responseType: 'stream' }
+      );
 
-    response.data
-      .on('end', () => {
-        res.end();
-      })
-      .on('error', (err) => {
-        res.status(500).json({ error: err.message });
-      })
-      .pipe(res);
+      console.log("Arman");
+
+      const chunks = [];
+      driveResponse.data.on('data', (chunk) => {
+          chunks.push(chunk);
+      });
+
+      driveResponse.data.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        const base64Data = buffer.toString('base64');
+    
+        const responseToSend = {
+            fileId: fileId,
+            data: base64Data,
+        };
+        
+        console.log("Sending response:", responseToSend);
+        res.json(responseToSend);
+    });
+    
+
+      driveResponse.data.on('error', (err) => {
+          res.status(500).json({ error: err.message });
+      });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+      console.error("Error downloading deed:", error);
+      res.status(500).json({ error: error.message });
   }
 };
+
+
+
